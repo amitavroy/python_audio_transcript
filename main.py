@@ -20,71 +20,6 @@ image = (
     .pip_install("torch", "transformers", "accelerate")
 )
 
-@app.function(
-    gpu="A10G",
-    image=image,
-    volumes={"/model-cache": model_volume},
-    timeout=1800,
-)
-def transcribe(audio_bytes: bytes) -> str:
-    import os
-    import torch
-    import json
-    from vibevoice.modular.modeling_vibevoice_asr import VibeVoiceASRForConditionalGeneration
-    from vibevoice.processor.vibevoice_asr_processor import VibeVoiceASRProcessor
-
-    os.environ["HF_HOME"] = "/model-cache"
-    model_path = "microsoft/VibeVoice-ASR"
-
-    processor = VibeVoiceASRProcessor.from_pretrained(
-        model_path,
-        language_model_pretrained_name="Qwen/Qwen2.5-7B",
-    )
-    model = VibeVoiceASRForConditionalGeneration.from_pretrained(
-        model_path,
-        dtype=torch.bfloat16,
-        device_map="auto",
-        attn_implementation="sdpa",
-        trust_remote_code=True,
-    )
-
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-        tmp.write(audio_bytes)
-        tmp_path = tmp.name
-
-    inputs = processor(
-        audio=tmp_path,
-        return_tensors="pt",
-        add_generation_prompt=True,
-    )
-    device = next(model.parameters()).device
-    inputs = {
-        k: v.to(device) if isinstance(v, torch.Tensor) else v
-        for k, v in inputs.items()
-    }
-
-    with torch.no_grad():
-        output_ids = model.generate(
-            **inputs,
-            max_new_tokens=512,
-            temperature=0.0,
-            do_sample=False,
-            pad_token_id=processor.pad_id,
-            eos_token_id=processor.tokenizer.eos_token_id,
-        )
-
-    generated_ids = output_ids[0, inputs["input_ids"].shape[1] :]
-    generated_text = processor.decode(generated_ids, skip_special_tokens=True)
-    segments = processor.post_process_transcription(generated_text)
-    os.unlink(tmp_path)
-
-    if segments:
-        return json.dumps(segments, ensure_ascii=False)
-    return json.dumps(
-        [{"Start": 0.0, "End": 0.0, "Speaker": -1, "Content": generated_text}],
-        ensure_ascii=False,
-    )
-
 
 def _get_audio_duration_seconds(audio_path: str) -> float:
     duration = subprocess.check_output(
@@ -315,7 +250,6 @@ def main(
     chunk_seconds: int = 60,
     overlap_seconds: int = 1,
     max_new_tokens: int = 1024,
-    output_path: str = "",
     yes: bool = False,
     confirm: str = "",
 ):
@@ -358,9 +292,10 @@ def main(
     print(f"End time:   {end.strftime('%H:%M:%S')}")
     print(f"Elapsed:    {str(elapsed).split('.')[0]}")
     print(result)
-    if not output_path:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = f"output_{timestamp}.txt"
+    output_dir = Path("output")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = output_dir / f"output_{timestamp}.txt"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(result)
     print(f"Wrote transcript to: {output_path}")

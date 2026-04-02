@@ -9,8 +9,6 @@ It uses the `transcribe_chunked()` flow:
 - Shifts each segment’s timestamps to absolute time in the original audio.
 - Performs a simple overlap de-duplication to reduce repeated lines near chunk boundaries.
 
-Note: per your request, this README intentionally **ignores** the standalone `transcribe()` function.
-
 ## Prerequisites
 
 - **Python**: 3.12+ (see `pyproject.toml`)
@@ -25,7 +23,7 @@ From the repo root:
 uv run modal run main.py --audio-path /path/to/audio.mp3
 ```
 
-The program will print the transcription JSON to stdout and also write it to a file named like `output_YYYYMMDD_HHMMSS.txt` (unless you override the output path).
+The program will print the transcription JSON to stdout and also write it to `output/output_YYYYMMDD_HHMMSS.txt`.
 
 ### Non-interactive / CI-friendly run
 
@@ -53,10 +51,4 @@ uv run modal run main.py --audio-path /path/to/audio.mp3 --chunk-seconds 90 --ov
 
 ```bash
 uv run modal run main.py --audio-path /path/to/audio.mp3 --max-new-tokens 1024
-```
-
-- **Choose output file**:
-
-```bash
-uv run modal run main.py --audio-path /path/to/audio.mp3 --output-path transcript.json.txt
 ```
