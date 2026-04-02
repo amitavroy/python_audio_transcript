@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 def load_vibevoice_asr(*, hf_home: str = "/model-cache", model_path: str = "microsoft/VibeVoice-ASR"):

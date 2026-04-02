@@ -1,8 +1,8 @@
 from datetime import datetime
 from pathlib import Path
 
-from modal_app import app
-from transcription_service import transcribe_chunked
+from transcript_app.modal_app import app
+from transcript_app.transcription_service import transcribe_chunked
 
 
 @app.local_entrypoint()

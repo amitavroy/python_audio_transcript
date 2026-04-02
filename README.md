@@ -9,6 +9,8 @@ It uses the `transcribe_chunked()` flow:
 - Shifts each segment’s timestamps to absolute time in the original audio.
 - Performs a simple overlap de-duplication to reduce repeated lines near chunk boundaries.
 
+Application and Modal code live in the **`transcript_app/`** package (`modal_app`, `transcription_service`, helpers). The repo root keeps `main.py` as the CLI entrypoint.
+
 ## Prerequisites
 
 - **Python**: 3.12+ (see `pyproject.toml`)

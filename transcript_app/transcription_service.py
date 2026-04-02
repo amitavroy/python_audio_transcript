@@ -2,16 +2,17 @@ import json
 import tempfile
 from pathlib import Path
 
-from audio_utils import extract_chunk_mp3, get_audio_duration_seconds
-from modal_app import app, image, model_volume
-from segments import dedupe_overlap_segments, normalize_and_offset_segments
-from vibevoice_asr import load_vibevoice_asr, transcribe_audio_path
+from .audio_utils import extract_chunk_mp3, get_audio_duration_seconds
+from .modal_app import app, image, model_volume
+from .segments import dedupe_overlap_segments, normalize_and_offset_segments
+from .vibevoice_asr import load_vibevoice_asr, transcribe_audio_path
 
 
 @app.function(
     gpu="A10G",
     image=image,
     volumes={"/model-cache": model_volume},
+    include_source=True,
     timeout=1800,
 )
 def transcribe_chunked(
